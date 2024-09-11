@@ -1,0 +1,107 @@
+//*************************************************************        LIIBRERÍAS       *********************************************************************************************
+#include <Arduino.h>          //<>
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+
+//************************************************************* DEFINICIÓN DE LOS PINES *********************************************************************************************
+
+//PINES PARA LCD
+#define I2C_SDA 21
+#define I2C_SCL 22
+
+//PINES PARA POTENCIÓMETROS
+#define pot1 15
+#define pot2 2
+
+//PINES PARA BOTONES
+#define btn_add 13
+#define btn_sub 12
+
+//NO SE QUE HACE ESTO PERO AQUÍ ESTÁ
+LiquidCrystal_I2C lcd(0x27,16,2);
+
+//**************************************************************   DEFINICIÓN DE VARIABLES   **************************************************************************************
+
+uint8_t decenas1, unidades1, decimales1;
+uint8_t decenas2, unidades2, decimales2;
+
+float voltaje1, voltaje2;
+
+//************************************************************************  SETUP  *******************************************************************************************
+
+
+
+void setup() {
+  lcd.init();
+  lcd.backlight();
+  
+  Serial.begin(115200);
+
+  lcd.setCursor(0, 0);  // Set cursor to column 0, row 0
+  lcd.print("Laboratorio 6");
+  
+  lcd.setCursor(0, 1);  // Set cursor to column 0, row 1
+  lcd.print("ESP32 & LCD");
+  delay(500);
+  lcd.clear();
+}
+
+//*************************************************************************  LOOP  *******************************************************************************************
+
+void loop() {
+  //Cálculos para el potenciómetro 1
+  voltaje1 = analogReadMilliVolts(pot1);
+  int temp1 = voltaje1;                    //declaración de la variable temporal para operar para decenas, unidades y decimales
+
+  decenas1 = temp1 / 100.0;                //cálculo de las decenas para el 1er potenciómetro
+
+  temp1 = temp1 - decenas1 * (100.0);      //preparo temp1 para operar para las unidades
+
+  unidades1 = temp1 / 10.0;                //cálculo de las unidades para el 1er potenciómetro
+
+  temp1 = temp1 - unidades1 * (10.0);     //preparo temp1 para operar para los decimales
+
+  decimales1 = temp1;                      //cálculo de decimales para el 1er potenciómetro
+
+
+//Cálculos para el potenciómetro 2
+  voltaje2 = analogReadMilliVolts(pot2);
+  int temp2 = voltaje2;                    //declaración de la variable temporal para operar para decenas, unidades y decimales
+
+  decenas2 = temp2 / 100.0;                //cálculo de las decenas para el 2do potenciómetro
+
+  temp2 = temp2 - decenas2 * (100.0);      //preparo temp1 para operar para las unidades
+
+  unidades2 = temp2 / 10.0;                //cálculo de las unidades para el 2do potenciómetro
+
+  temp2 = temp2 - unidades2 * (10.0);      //preparo temp1 para operar para los decimales
+
+  decimales2 = temp2;                      //cálculo de los decimales para el 2do potenciómetro
+
+
+//IFs para contador con botones
+
+//Display de los valore de voltaje y contador
+  lcd.setCursor(0, 0);
+  lcd.print("V1:  V2:  Cont:");
+  //POTENCIÓMETRO 1
+  lcd.setCursor(0, 1);
+  lcd.print(decenas1);
+  lcd.setCursor(1, 1);
+  lcd.print(".");
+  lcd.setCursor(2, 1);
+  lcd.print(unidades1);
+  lcd.setCursor(3, 1);
+  lcd.print(decimales1);
+  //POTENCIÓMETRO 2
+  lcd.setCursor(5,1);
+  lcd.print(decenas2);
+  lcd.setCursor(6,1);
+  lcd.print(".");
+  lcd.setCursor(7,1);
+  lcd.print(unidades2);
+  lcd.setCursor(8,1);
+  lcd.print(decimales2);
+  delay(1000);
+  lcd.clear();
+}
