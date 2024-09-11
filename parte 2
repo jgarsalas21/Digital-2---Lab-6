@@ -14,53 +14,42 @@
 #define pot2 2
 
 //PINES PARA BOTONES
-#define add_btn 12
-#define sub_btn 13
+#define btn_add 13
+#define btn_sub 12
 
 //NO SE QUE HACE ESTO PERO AQUÍ ESTÁ
 LiquidCrystal_I2C lcd(0x27,16,2);
 
 //**************************************************************   DEFINICIÓN DE VARIABLES   **************************************************************************************
-//POTENCIÓMETROS
-uint8_t decenas1, unidades1, decimales1;    //Variables mostradas en la LCD
+
+uint8_t decenas1, unidades1, decimales1;
 uint8_t decenas2, unidades2, decimales2;
 
-float voltaje1, voltaje2;                   //Variables para leer los pots
+float voltaje1, voltaje2;
 
-//CONTADOR
-int contador = 0;                           //Variable del contador para mostrar en la LCD
+int contador = 0;
+volatile bool addRead = false;
+volatile bool subRead = false;
+//*****************************************************************  DECLARACIÓN DE FUNCIONES  ************************************************************************************
 
-unsigned long lastDebounceTimeInc = 0;      //Variables para evitar el rebote
-unsigned long lastDebounceTimeDec = 0;
-unsigned long debounceDelay = 50;
+void IRAM_ATTR suma_fn();
+void IRAM_ATTR resta_fn();
 
-
-//*******************************************************************  INTERRUPCIONES  ****************************************************************************************
-/*void IRAM_ATTR suma();
-
-void IRAM_ATTR resta();*/
 //************************************************************************  SETUP  *******************************************************************************************
 
 
-
 void setup() {
-
-  //pinmode para los botones del contador
-  pinMode(add_btn, INPUT_PULLUP);
-  pinMode(sub_btn, INPUT_PULLUP);
-
-  //setup del LCD
   lcd.init();
   lcd.backlight();
-  
+
   Serial.begin(115200);
 
   lcd.setCursor(0, 0);  // Set cursor to column 0, row 0
   lcd.print("Laboratorio 6");
-  
+
   lcd.setCursor(0, 1);  // Set cursor to column 0, row 1
   lcd.print("ESP32 & LCD");
-  delay(3000);
+  delay(500);
   lcd.clear();
 }
 
@@ -77,7 +66,7 @@ void loop() {
 
   unidades1 = temp1 / 10.0;                //cálculo de las unidades para el 1er potenciómetro
 
-  temp1 = temp1 - unidades1 * (10.0);      //preparo temp1 para operar para los decimales
+  temp1 = temp1 - unidades1 * (10.0);     //preparo temp1 para operar para los decimales
 
   decimales1 = temp1;                      //cálculo de decimales para el 1er potenciómetro
 
@@ -96,30 +85,20 @@ void loop() {
 
   decimales2 = temp2;                      //cálculo de los decimales para el 2do potenciómetro
 
-//IFs para configurar el contador
-  bool addRead = digitalRead(add_btn);     //Variables para cambiar el valor del contador
-  bool subRead = digitalRead(sub_btn);
+  //IFs para contador con botones
+  addRead = digitalRead(btn_add);
+  subRead = digitalRead(btn_sub);
 
-  if (addRead == false)                    //Condición para sumar al contador
+  if (addRead == true)
   {
-    addRead = true;
-    contador++;
-    if (contador > 255)                    //Lo limita a 255 (8 bits)
-    {
-      contador = 255;
-    }
-    
+    suma_fn();
   }
   
-  if (subRead == false)                      //Condición para restar al contador
+  if (subRead == true)
   {
-    subRead = true;
-    contador--;
-    if (contador < 0)
-    {
-      contador = 0;
-    }
+    resta_fn();
   }
+  
 
 //Display de los valore de voltaje y contador
   lcd.setCursor(0, 0);
@@ -145,5 +124,27 @@ void loop() {
   //CONTADOR
   lcd.setCursor(10,1);
   lcd.print(contador);
-  delay(10);
+  delay(250);
+}
+
+//***************************************************************************  FUNCIONES  ***************************************************************************************
+
+void IRAM_ATTR suma_fn(){
+  addRead = false;
+  contador++;
+  if (contador > 255)                    //Para que no pase de 8 bits
+  {
+    contador = 0;
+    lcd.setCursor(10,1);
+    lcd.print("    ");
+  }
+};
+
+void IRAM_ATTR resta_fn(){
+  subRead = false;
+  contador--;
+  if (contador < 0)                      //para que no pase de 8 bits
+  {
+    contador = 255;
+  }
 }
